@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Toroidal Field — Unified Control v1.0</title>
+  <style>
+    :root {
+      --bg-color: #111825;
+      --panel-bg: rgba(0, 0, 0, 0); /* Set to 100% transparent */
+      --text-primary: #76f6f3;
+      --text-highlight: #7cf9d9;
+      --text-value: #63fbe9;
+      --accent: #2c98c8;
+      --accent-hover: #3ab0e0;
+      --white: #ffffff;
+      --shadow: 0 4px 32px rgba(0, 0, 0, 0.5);
+      --field-blue: #1E90FF;
+      --field-purple: #800080;
+      --field-green: #32CD32;
+      --glow-cyan: #00FFFF;
+      --glow-magenta: #FF00FF;
+      --wire-silver: #C0C0C0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg-color);
+      font-family: system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    #gui {
+      position: fixed;
+      left: 0;
+      top: 0.5rem;
+      z-index: 10;
+      background: var(--panel-bg); /* 100% transparent */
+      color: var(--text-primary);
+      padding: 1rem;
+      border-radius: 0 1rem 1rem 0;
+      width: 15rem;
+      max-height: calc(100vh - 1rem);
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+    }
+
+    #gui label {
+      font-weight: 600;
+      margin-right: 0.5rem;
+      min-width: 8rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    #gui input[type="range"] {
+      width: 6rem;
+      margin: 0 0.5rem;
+      accent-color: var(--accent);
+    }
+
+    #gui input[type="color"],
+    #gui input[type="number"] {
+      vertical-align: middle;
+      border-radius: 0.375rem;
+      border: 1px solid var(--accent);
+      background: var(--panel-bg); /* 100% transparent */
+      color: var(--text-primary);
+      padding: 0.25rem;
+      font-size: 0.9rem;
+      width: 6rem;
+    }
+
+    #gui input[readonly] {
+      opacity: 0.75;
+      background: #202c37; /* Solid background for readability */
+    }
+
+    #gui .row {
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    #gui .row .sub-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #gui .val {
+      color: var(--text-value);
+      margin-left: 0.5rem;
+      min-width: 2.5rem;
+      text-align: right;
+    }
+
+    #gui .sizeunit {
+      margin-left: 0.5rem;
+      color: var(--text-highlight);
+    }
+
+    #gui select {
+      margin-left: 0.5rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--accent);
+      background: var(--panel-bg); /* 100% transparent */
+      color: var(--text-primary);
+      padding: 0.25rem;
+      font-size: 0.9rem;
+    }
+
+    #energyStats {
+      background: #222b4a;
+      color: var(--text-highlight);
+      border-radius: 0.625rem;
+      padding: 0.75rem 1rem;
+      margin: 1rem 0 0;
+      font-size: 0.95rem;
+    }
+
+    #energyStats strong {
+      color: var(--white);
+    }
+
+    #gui .field-block {
+      background: var(--panel-bg); /* 100% transparent */
+      border-radius: 0.625rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid #263259;
+    }
+
+    #gui .btnrow {
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    #gui button {
+      background: var(--panel-bg); /* 100% transparent */
+      color: var(--text-primary);
+      border: 1px solid var(--accent);
+      border-radius: 0.375rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s, color 0.2s;
+      min-width: 6rem;
+      text-align: center;
+    }
+
+    #gui button:hover {
+      background: var(--accent-hover);
+      color: var(--white);
+    }
+
+    #gui button:active {
+      background: #222949;
+    }
+
+    #gui button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .credits {
+      margin-top: 1rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--accent);
+      font-size: 0.85rem;
+      color: var(--text-highlight);
+      text-align: center;
+    }
+
+    .credits a {
+      color: var(--text-value);
+      text-decoration: none;
+    }
+
+    .credits a:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+
+    /* Mobile and Responsive Styles */
+    @media (max-width: 600px) {
+      #gui {
+        width: calc(100% - 1rem);
+        max-width: none;
+      }
+
+      #gui label {
+        min-width: 6rem;
+        font-size: 0.85rem;
+      }
+
+      #gui input[type="range"] {
+        width: 5rem;
+      }
+
+      #gui input[type="color"],
+      #gui input[type="number"],
+      #gui select {
+        font-size: 0.85rem;
+        padding: 0.2rem;
+        width: 5rem;
+      }
+
+      #gui .row .sub-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+      }
+
+      #gui button {
+        min-width: 5rem;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+      }
+
+      .credits {
+        font-size: 0.75rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      #gui {
+        font-size: 0.8rem;
+      }
+
+      #energyStats {
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="gui" role="region" aria-label="Control Panel">
+    <div id="gui-content">
+      <div class="field-block">
+        <div class="row">
+          <label for="diameterFt">Field Diameter</label>
+          <div class="sub-row">
+            <input type="number" id="diameterFt" min="0.1" step="0.01" value="25.23" aria-label="Diameter in feet" />
+            <span class="sizeunit">ft</span>
+          </div>
+          <div class="sub-row">
+            <input type="number" id="diameterM" min="0.1" step="0.01" value="7.69" readonly aria-label="Diameter in meters" />
+            <span class="sizeunit">m</span>
+          </div>
+        </div>
+        <div class="row">
+          <label for="radiusFt">Field Radius</label>
+          <div class="sub-row">
+            <input type="number" id="radiusFt" min="0.1" step="0.01" value="12.62" aria-label="Radius in feet" />
+            <span class="sizeunit">ft</span>
+          </div>
+          <div class="sub-row">
+            <input type="number" id="radiusM" min="0.1" step="0.01" value="3.85" readonly aria-label="Radius in meters" />
+            <span class="sizeunit">m</span>
+          </div>
+        </div>
+        <div class="row">
+          <label for="areaFt">Energy Area</label>
+          <div class="sub-row">
+            <input type="number" id="areaFt" min="0.1" step="1" value="500" aria-label="Area in square feet" />
+            <span class="sizeunit">ft²</span>
+          </div>
+          <div class="sub-row">
+            <input type="number" id="areaM" min="0.1" step="1" value="46" readonly aria-label="Area in square meters" />
+            <span class="sizeunit">m²</span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <label for="visStyle">Visualization Style</label>
+        <select id="visStyle" aria-label="Visualization style">
+          <option value="streamlines">Streamlines</option>
+          <option value="harmonics">Harmonics</option>
+          <option value="plasma">Plasma Aura</option>
+          <option value="solid">Solid Color</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="fieldColor">Field Color</label>
+        <input type="color" id="fieldColor" value="#1E90FF" aria-label="Field color" />
+      </div>
+      <div class="row">
+        <label for="wireColor">Wireframe Color</label>
+        <input type="color" id="wireColor" value="#C0C0C0" aria-label="Wireframe color" />
+      </div>
+      <div class="row">
+        <label for="glowColor">Glow Color</label>
+        <input type="color" id="glowColor" value="#00FFFF" aria-label="Glow color (plasma mode)" />
+      </div>
+      <div class="row">
+        <label>Wireframe Density</label>
+        <input type="range" min="16" max="80" value="44" id="density" aria-label="Wireframe density" />
+        <span class="val" id="densityVal">44</span>
+      </div>
+      <div class="row">
+        <label>Rainbow Width</label>
+        <input type="range" min="0.01" max="0.5" value="0.19" step="0.01" id="rainbowWidth" aria-label="Rainbow width" />
+        <span class="val" id="widthVal">0.19</span>
+      </div>
+      <div class="row">
+        <label>Tube Radius</label>
+        <input type="range" min="0.2" max="2.0" value="0.92" step="0.01" id="tube" aria-label="Tube radius" />
+        <span class="val" id="tubeVal">0.92</span>
+      </div>
+      <div class="row">
+        <label>Field Opacity</label>
+        <input type="range" min="0.10" max="1.00" value="0.93" step="0.01" id="rainbowOpacity" aria-label="Field opacity" />
+        <span class="val" id="rainbowOpacityVal">0.93</span>
+      </div>
+      <div class="row">
+        <label>Wire Opacity</label>
+        <input type="range" min="0.00" max="1.00" value="0.41" step="0.01" id="wireOpacity" aria-label="Wire opacity" />
+        <span class="val" id="wireOpacityVal">0.41</span>
+      </div>
+      <div class="row">
+        <label>Rotation Speed</label>
+        <input type="range" min="0" max="0.1" value="0.02" step="0.001" id="rotationSpeed" aria-label="Rotation speed" />
+        <span class="val" id="rotationSpeedVal">0.02</span>
+      </div>
+      <div class="row">
+        <label for="bgcolor">Background Color</label>
+        <input type="color" id="bgcolor" value="#111825" aria-label="Background color" />
+      </div>
+      <div class="row btnrow">
+        <button id="pauseBtn" aria-label="Pause or resume animation">Pause</button>
+        <button id="exportBtn" aria-label="Export as PNG">Export PNG</button>
+        <button id="exportSvgBtn" aria-label="Export as SVG">Export SVG</button>
+        <button id="exportBlenderBtn" aria-label="Export as OBJ for Blender">Export OBJ</button>
+      </div>
+      <div id="energyStats" aria-live="polite"></div>
+      <div class="credits">
+        Developed by <a href="https://www.pemfhealing.app" target="_blank">Art Tawanghar</a></a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "https://esm.sh/three@0.155.0";
+    import { OrbitControls } from "https://esm.sh/three@0.155.0/examples/jsm/controls/OrbitControls.js";
+
+    // Conversion functions
+    function ftToM(ft) {
+      return +(ft * 0.3048).toFixed(2);
+    }
+    function mToFt(m) {
+      return +(m / 0.3048).toFixed(2);
+    }
+    function areaFtToM2(a) {
+      return +(a * 0.092903).toFixed(0);
+    }
+    function areaM2ToFt(a) {
+      return +(a / 0.092903).toFixed(0);
+    }
+    function areaFromRadius(r) {
+      return Math.PI * r * r;
+    }
+    function radiusFromArea(a) {
+      return Math.sqrt(a / Math.PI);
+    }
+    function radiusFromDiameter(d) {
+      return d / 2;
+    }
+    function diameterFromRadius(r) {
+      return r * 2;
+    }
+
+    // UI elements
+    const gui = document.getElementById("gui");
+    const diameterFt = document.getElementById("diameterFt");
+    const diameterM = document.getElementById("diameterM");
+    const radiusFt = document.getElementById("radiusFt");
+    const radiusM = document.getElementById("radiusM");
+    const areaFt = document.getElementById("areaFt");
+    const areaM = document.getElementById("areaM");
+    const statsBox = document.getElementById("energyStats");
+    const fieldColor = document.getElementById("fieldColor");
+    const wireColor = document.getElementById("wireColor");
+    const glowColor = document.getElementById("glowColor");
+
+    // Central update logic
+    [diameterFt, radiusFt, areaFt].forEach((input) => {
+      input.addEventListener("input", (e) => updateFields(e.target.id));
+    });
+
+    function updateFields(changed) {
+      let d_ft = +diameterFt.value || 0;
+      let r_ft = +radiusFt.value || 0;
+      let a_ft = +areaFt.value || 0;
+
+      if (changed === "diameterFt") {
+        r_ft = radiusFromDiameter(d_ft);
+        a_ft = areaFromRadius(r_ft);
+      } else if (changed === "radiusFt") {
+        d_ft = diameterFromRadius(r_ft);
+        a_ft = areaFromRadius(r_ft);
+      } else if (changed === "areaFt") {
+        r_ft = radiusFromArea(a_ft);
+        d_ft = diameterFromRadius(r_ft);
+      }
+
+      const d_m = ftToM(d_ft);
+      const r_m = ftToM(r_ft);
+      const a_m = areaFtToM2(a_ft);
+
+      diameterFt.value = d_ft.toFixed(2);
+      diameterM.value = d_m.toFixed(2);
+      radiusFt.value = r_ft.toFixed(2);
+      radiusM.value = r_m.toFixed(2);
+      areaFt.value = Math.round(a_ft);
+      areaM.value = Math.round(a_m);
+
+      updateEnergyStats();
+      updateTorus();
+    }
+
+    // THREE.js Setup
+    let density = 44,
+      bandWidth = 0.19,
+      tubeRadius = 0.92,
+      rotationSpeed = 0.02,
+      rainbowOpacity = 0.93,
+      wireOpacity = 0.41,
+      visStyle = "streamlines",
+      paused = false,
+      fieldRadius = +radiusFt.value / 13,
+      glowMesh = null,
+      rainbowTex = null;
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      preserveDrawingBuffer: true,
+    });
+    renderer.setClearColor(0x111825, 1);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    let bgColor = "#111825";
+    const camera = new THREE.PerspectiveCamera(
+      40,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(0, 0, 8.2);
+    scene.add(camera);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxDistance = 20;
+    controls.minDistance = 2;
+
+    // Handle window resize
+    window.addEventListener("resize", () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    function makeRainbowTexture(width = 1024, height = 64, bandWidth = 0.19) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      const bandStart = (1 - bandWidth) / 2,
+        bandEnd = 1 - bandStart;
+      for (let x = 0; x < width; ++x) {
+        const t = x / width;
+        const hue = (360 * t) % 360;
+        let fade = t >= bandStart && t <= bandEnd ? 1 : 0;
+        if (t < bandStart) fade = 0.5 * (1 - Math.cos((Math.PI * t) / bandStart));
+        if (t > bandEnd)
+          fade = 0.5 * (1 - Math.cos((Math.PI * (1 - t)) / (1 - bandEnd)));
+        ctx.fillStyle = `hsla(${hue}, 98%, 60%, ${0.85 * fade})`;
+        ctx.fillRect(x, 0, 1, height);
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+      return texture;
+    }
+
+    function createMaterials() {
+      if (rainbowTex) {
+        rainbowTex.dispose();
+        rainbowTex = null;
+      }
+      let rainbowMat, wireMat, glowMat = null;
+      const fieldCol = new THREE.Color(fieldColor.value);
+      const wireCol = new THREE.Color(wireColor.value);
+      const glowCol = new THREE.Color(glowColor.value);
+
+      if (visStyle === "streamlines") {
+        rainbowTex = makeRainbowTexture(1024, 80, bandWidth);
+        rainbowMat = new THREE.MeshBasicMaterial({
+          map: rainbowTex,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: rainbowOpacity,
+        });
+        wireMat = new THREE.MeshBasicMaterial({
+          color: wireCol,
+          wireframe: true,
+          transparent: true,
+          opacity: wireOpacity,
+        });
+        return { rainbowMat, wireMat, glowMat: null };
+      }
+      if (visStyle === "harmonics") {
+        rainbowTex = makeRainbowTexture(256, 32, bandWidth / 2);
+        rainbowMat = new THREE.MeshBasicMaterial({
+          map: rainbowTex,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.99,
+        });
+        wireMat = new THREE.MeshBasicMaterial({
+          color: wireCol,
+          wireframe: true,
+          transparent: true,
+          opacity: wireOpacity * 0.5,
+        });
+        return { rainbowMat, wireMat, glowMat: null };
+      }
+      if (visStyle === "plasma") {
+        rainbowTex = makeRainbowTexture(1024, 80, bandWidth);
+        rainbowMat = new THREE.MeshBasicMaterial({
+          map: rainbowTex,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: rainbowOpacity * 0.7,
+        });
+        wireMat = new THREE.MeshBasicMaterial({
+          color: wireCol,
+          wireframe: true,
+          transparent: true,
+          opacity: wireOpacity * 0.3,
+        });
+        glowMat = new THREE.MeshBasicMaterial({
+          color: glowCol,
+          transparent: true,
+          opacity: 0.14,
+          side: THREE.DoubleSide,
+        });
+        return { rainbowMat, wireMat, glowMat };
+      }
+      if (visStyle === "solid") {
+        rainbowMat = new THREE.MeshBasicMaterial({
+          color: fieldCol,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: rainbowOpacity,
+        });
+        wireMat = new THREE.MeshBasicMaterial({
+          color: wireCol,
+          wireframe: true,
+          transparent: true,
+          opacity: wireOpacity,
+        });
+        return { rainbowMat, wireMat, glowMat: null };
+      }
+    }
+
+    let rainbowMat, wireMat, torusMesh, wireMesh, torusGeom;
+    function updateTorus() {
+      if (torusMesh) {
+        scene.remove(torusMesh);
+        torusMesh.geometry.dispose();
+        torusMesh.material.dispose();
+        torusMesh = null;
+      }
+      if (wireMesh) {
+        scene.remove(wireMesh);
+        wireMesh.geometry.dispose();
+        wireMesh.material.dispose();
+        wireMesh = null;
+      }
+      if (glowMesh) {
+        scene.remove(glowMesh);
+        glowMesh.geometry.dispose();
+        glowMesh.material.dispose();
+        glowMesh = null;
+      }
+
+      const r_ft = +radiusFt.value || 1;
+      fieldRadius = r_ft / 13;
+
+      torusGeom = new THREE.TorusGeometry(
+        fieldRadius,
+        tubeRadius,
+        density,
+        density * 3
+      );
+      const mats = createMaterials();
+      rainbowMat = mats.rainbowMat;
+      wireMat = mats.wireMat;
+      torusMesh = new THREE.Mesh(torusGeom, rainbowMat);
+      wireMesh = new THREE.Mesh(torusGeom, wireMat);
+
+      scene.add(torusMesh);
+      scene.add(wireMesh);
+
+      if (mats.glowMat) {
+        const glowGeom = new THREE.TorusGeometry(
+          fieldRadius * 1.23,
+          tubeRadius * 1.19,
+          density,
+          density * 3
+        );
+        glowMesh = new THREE.Mesh(glowGeom, mats.glowMat);
+        scene.add(glowMesh);
+      }
+    }
+
+    // Export functions with loading feedback
+    async function exportFile(button, type, fn) {
+      button.disabled = true;
+      button.textContent = `Exporting ${type}...`;
+      try {
+        await fn();
+      } catch (e) {
+        alert(`Error exporting ${type}: ${e.message}`);
+      } finally {
+        button.disabled = false;
+        button.textContent = `Export ${type}`;
+      }
+    }
+
+    document.getElementById("exportBtn").onclick = () => {
+      exportFile(document.getElementById("exportBtn"), "PNG", () => {
+        const url = renderer.domElement.toDataURL("image/png");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "torus-field.png";
+        a.click();
+      });
+    };
+
+    document.getElementById("exportSvgBtn").onclick = () => {
+      exportFile(document.getElementById("exportSvgBtn"), "SVG", async () => {
+        const { SVGRenderer } = await import("https://esm.sh/three@0.155.0/examples/jsm/renderers/SVGRenderer.js");
+        const svgRenderer = new SVGRenderer();
+        svgRenderer.setSize(window.innerWidth, window.innerHeight);
+        svgRenderer.render(scene, camera);
+        const svgData = svgRenderer.domElement.outerHTML;
+        const blob = new Blob([svgData], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "torus-field.svg";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    };
+
+    document.getElementById("exportBlenderBtn").onclick = () => {
+      exportFile(document.getElementById("exportBlenderBtn"), "OBJ", async () => {
+        const { OBJExporter } = await import("https://esm.sh/three@0.155.0/examples/jsm/exporters/OBJExporter.js");
+        const exporter = new OBJExporter();
+        const objStr = exporter.parse(scene);
+        const blob = new Blob([objStr], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "torus-field.obj";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    };
+
+    // Animation loop
+    function animate() {
+      if (!paused) {
+        if (torusMesh) torusMesh.rotation.y += rotationSpeed;
+        if (wireMesh) wireMesh.rotation.y += rotationSpeed;
+        if (glowMesh) glowMesh.rotation.y += rotationSpeed;
+      }
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // UI Sliders and Selects
+    [
+      ["density", (v) => { density = +v; }],
+      ["rainbowWidth", (v) => { bandWidth = +v; }],
+      ["tube", (v) => { tubeRadius = +v; }],
+      ["rainbowOpacity", (v) => { rainbowOpacity = +v; }],
+      ["wireOpacity", (v) => { wireOpacity = +v; }],
+      ["rotationSpeed", (v) => { rotationSpeed = +v; }],
+    ].forEach(([id, set]) => {
+      const slider = document.getElementById(id);
+      const val = document.getElementById(id + "Val");
+      slider.oninput = () => {
+        set(slider.value);
+        if (val) val.textContent = slider.value;
+        updateTorus();
+      };
+      if (val) val.textContent = slider.value;
+    });
+
+    // Color inputs
+    [fieldColor, wireColor, glowColor].forEach((input) => {
+      input.oninput = () => {
+        localStorage.setItem(input.id, input.value);
+        updateTorus();
+      };
+      const savedColor = localStorage.getItem(input.id);
+      if (savedColor) {
+        input.value = savedColor;
+      }
+    });
+
+    document.getElementById("visStyle").oninput = (e) => {
+      visStyle = e.target.value;
+      updateTorus();
+    };
+    document.getElementById("bgcolor").oninput = function () {
+      bgColor = this.value;
+      renderer.setClearColor(bgColor, 1);
+      localStorage.setItem("bgcolor", this.value);
+    };
+    if (localStorage.getItem("bgcolor")) {
+      bgColor = localStorage.getItem("bgcolor");
+      document.getElementById("bgcolor").value = bgColor;
+      renderer.setClearColor(bgColor, 1);
+    }
+
+    document.getElementById("pauseBtn").onclick = function () {
+      paused = !paused;
+      this.textContent = paused ? "Resume" : "Pause";
+      this.setAttribute("aria-label", paused ? "Resume animation" : "Pause animation");
+    };
+
+    // Update energy stats
+    function updateEnergyStats() {
+      const r_ft = +radiusFt.value || 1;
+      const d_ft = r_ft * 2;
+      const r_m = ftToM(r_ft),
+        d_m = ftToM(d_ft);
+      const area_ft = Math.PI * r_ft * r_ft,
+        area_m = Math.PI * r_m * r_m;
+      statsBox.innerHTML = `
+        <div style="font-weight: bold; font-size:1.16em;">
+          ${Math.round(area_ft).toLocaleString()} sq ft toroidal energy field 
+          (<span style="font-weight:normal">${d_ft.toLocaleString(undefined, {maximumFractionDigits: 2})} ft / </span>
+          <span style="font-weight:normal">${d_m.toLocaleString(undefined, {maximumFractionDigits: 2})} m across</span>)
+        </div>
+        <div style="color:var(--text-highlight);">Omnidirectional field radius: <b>${r_ft.toLocaleString(undefined, {maximumFractionDigits: 2})} ft</b>
+          (<b>${r_m.toLocaleString(undefined, {maximumFractionDigits: 2})} m</b>) from center</div>
+        <div>Area: <b>${Math.round(area_ft).toLocaleString()}</b> ft² / <b>${Math.round(area_m).toLocaleString()}</b> m²</div>
+      `;
+    }
+
+    // Initialize
+    updateFields("diameterFt");
+    updateTorus();
+  </script>
+</body>
+</html>
